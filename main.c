@@ -112,8 +112,112 @@ void analyser(double tab_latitudes[], double tab_longitudes[], double tab_altitu
 void calculer(double tab_latitudes[], double tab_longitudes[], double tab_altitudes[], int taille);
 
 // Programme principal
-int main()
+int main(void)
 {
+	double latitudes[NB_MAX_POINT];
+	double altitudes[NB_MAX_POINT];
+	double longitudes[NB_MAX_POINT];
+	int nb_points=0;
+	int choix;
+
+	do {
+		choix = afficher_menu();
+
+		switch (choix) {
+			case CHARGER:
+				nb_points = charger(latitudes, longitudes, altitudes, NB_MAX_POINT);
+				break;
+
+			case AFFICHER:
+				afficher(latitudes, longitudes, altitudes, nb_points);
+				break;
+
+			case ANALYSER:
+				analyser(latitudes, longitudes, altitudes, nb_points);
+				break;
+
+			case CALCULER:
+				calculer(latitudes, longitudes, altitudes, nb_points);
+				break;
+
+			case QUITTER:
+				break;
+
+			default:
+				printf("Choix invalide.\n");
+		}
+	} while (choix != QUITTER);
 
 	return EXIT_SUCCESS;
+}
+
+void afficher(double tab_latitudes[], double tab_longitudes[],
+			  double tab_altitudes[], int taille)
+{
+	printf("%5s %12s %12s %10s\n",
+		   "index", "latitude", "longitude", "altitude");
+
+	for (int i = 0; i < taille; i++) {
+		printf("%5d %12.6f %12.6f %10.2f\n",
+			   i, tab_latitudes[i], tab_longitudes[i], tab_altitudes[i]);
+	}
+}
+int charger(double tab_latitudes[], double tab_longitudes[],
+			double tab_altitudes[], int taille_max)
+{
+	char nom_fichier[LONGUEUR_MAX_NOM_FICHIER];
+
+	printf("Nom du fichier GPS : ");
+	if (scanf("%99s", nom_fichier) != 1) {
+		return -1;
+	}
+
+	return lire_donnees_gps(nom_fichier, tab_latitudes, tab_longitudes,
+						  tab_altitudes, taille_max);
+}
+void calculer(double tab_latitudes[], double tab_longitudes[],
+			  double tab_altitudes[], int taille) {
+	int taille_fenetre;
+
+	printf("Taille de la fenetre : ");
+	if (scanf("%d", &taille_fenetre) != 1) {
+		int caractere = getchar();
+		while (caractere != '\n' && caractere != EOF) {
+			caractere = getchar();
+		}
+		printf("Entre un nombre entier.\n");
+		return;
+	}
+
+	double pente = pente_maximale(tab_latitudes, tab_longitudes,
+								 tab_altitudes, taille, taille_fenetre);
+
+	printf("Pente maximale : %.3f %%\n", pente);
+}
+
+void analyser(double tab_latitudes[], double tab_longitudes[],
+			  double tab_altitudes[], int taille)
+{
+	if (taille <= 0) {
+		printf("Distance totale (km) :\n");
+		printf("Ascension totale (m) :\n");
+		printf("Altitude minimale (m) :\n");
+		printf("Altitude maximale (m) :\n");
+		return;
+	}
+
+	double minimum;
+	double maximum;
+
+	double distance = distance_totale(tab_latitudes, tab_longitudes,
+									  tab_altitudes, taille, 0, taille - 1);
+	double montee = ascension(tab_altitudes, taille);
+
+	minimum_tableau(tab_altitudes, taille, &minimum);
+	maximum_tableau(tab_altitudes, taille, &maximum);
+
+	printf("Distance totale : %.2f km\n", distance);
+	printf("Ascension totale : %.1f m\n", montee);
+	printf("Altitude minimale : %.1f m\n", minimum);
+	printf("Altitude maximale : %.1f m\n", maximum);
 }
